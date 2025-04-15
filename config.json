@@ -1,0 +1,8 @@
+{
+    "serverURL": "http://nocus.samsungcms.com",
+    "tlsPort": 7002,
+    "useTLs": true,
+    "expectedTimezone": "America/Argentina/Buenos_Aires",
+    "lat": -34.6037,
+    "lng": -58.3816
+}
