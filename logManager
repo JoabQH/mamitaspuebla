@@ -1,0 +1,43 @@
+window.LogManager = {
+    logFileName: "log.txt",
+  
+    writeLog: function (message) {
+      const timestamp = new Date().toISOString();
+      const logEntry = `[${timestamp}] ${message}\n`;
+  
+      try {
+        tizen.filesystem.resolve("documents", function (dir) {
+          let logFile = dir.resolve(LogManager.logFileName);
+          logFile.openStream("a", function (stream) {
+            stream.write(logEntry);
+            stream.close();
+          }, function (e) {
+            console.error("No se pudo escribir en el log:", e.message);
+          }, "UTF-8");
+        }, function (e) {
+          console.error("No se pudo acceder a documentos para logs:", e.message);
+        });
+      } catch (err) {
+        console.error("Error general escribiendo log:", err.message);
+      }
+    },
+  
+    readLog: function (callback) {
+      try {
+        tizen.filesystem.resolve("documents/" + LogManager.logFileName,
+          function (file) {
+            file.readAsText(callback, function () {
+              callback("No se pudo leer el log.");
+            });
+          },
+          function () {
+            callback("No existe log.");
+          },
+          "r"
+        );
+      } catch (err) {
+        callback("Error accediendo a log: " + err.message);
+      }
+    }
+  };
+  
