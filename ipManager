@@ -1,0 +1,25 @@
+window.IPManager = {
+    obtenerZonaPorIP: function (callback) {
+      const xhr = new XMLHttpRequest();
+      xhr.open("GET", "https://ipapi.co/json/", true); // IP pública y zona
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4) {
+          if (xhr.status === 200) {
+            try {
+              const data = JSON.parse(xhr.responseText);
+              if (data && data.timezone) {
+                callback(null, data.timezone);
+              } else {
+                callback("No se pudo determinar zona por IP");
+              }
+            } catch (e) {
+              callback("Error procesando respuesta IP");
+            }
+          } else {
+            callback("Fallo en llamada IP: " + xhr.status);
+          }
+        }
+      };
+      xhr.send();
+    }
+  };
