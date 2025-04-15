@@ -1,60 +1,52 @@
 window.TimeSync = {
-  init: function (config, onStatus) {
-    const { lat, lng, expectedTimezone } = config;
-    const apiUrl = `https://timeapi.io/api/Time/current/coordinate?latitude=${lat}&longitude=${lng}`;
-
-    const xhr = new XMLHttpRequest();
-    xhr.open("GET", apiUrl, true);
-
-    xhr.onreadystatechange = function () {
-      if (xhr.readyState === 4) {
-        if (xhr.status === 200) {
-          try {
-            const data = JSON.parse(xhr.responseText);
-
-            if (!data.dateTime || !data.timeZone) {
-              throw new Error("Respuesta inválida de timeapi.io");
-            }
-
-            const utcTime = luxon.DateTime.fromISO(data.dateTime, {
-              zone: data.timeZone,
-            }).toUTC();
-
-            const targetTime = utcTime.setZone(expectedTimezone);
-
-            const currentLocalTime = new Date();
-            const adjustedDate = new Date(targetTime.toISO());
-
-            const info = `
-              Hora actual: ${currentLocalTime.toLocaleString()}<br>
-              Nueva hora: ${adjustedDate.toLocaleString()}<br>
-              Zona ajustada: ${expectedTimezone}
-            `;
-
-            console.log("Hora ajustada a:", adjustedDate.toString());
-
+    init: function (config, onStatus) {
+      const { lat, lng, expectedTimezone } = config;
+      const apiUrl = `https://timeapi.io/api/Time/current/coordinate?latitude=${lat}&longitude=${lng}`;
   
-            try {
-              tizen.time.setCurrentDateTime(adjustedDate);
-              if (onStatus) onStatus(info + "<br>Hora ajustada correctamente");
-            } catch (e) {
-              console.error("Error al ajustar la hora:", e);
-              if (onStatus) {
-              
-                onStatus(info + "<br><span style='color:orange'>Simulación: no se puede ajustar hora en emulador</span>");
-              }
-            }
-          } catch (err) {
-            console.error("Error al procesar la respuesta:", err);
-            if (onStatus) onStatus("Error al procesar respuesta");
-          }
+      IPManager.obtenerZonaPorIP(function (err, zonaDetectada) {
+        const zonaAUsar = err ? expectedTimezone : zonaDetectada;
+  
+        if (err) {
+          LogManager.writeLog("No se pudo detectar zona por IP: " + err);
         } else {
-          console.error("Error al consultar timeapi.io:", xhr.status);
-          if (onStatus) onStatus("Error al consultar timeapi.io");
+          LogManager.writeLog("Zona horaria detectada por IP: " + zonaDetectada);
         }
-      }
-    };
-
-    xhr.send();
-  },
-};
+  
+        const xhr = new XMLHttpRequest();
+        xhr.open("GET", apiUrl, true);
+        xhr.onreadystatechange = function () {
+          if (xhr.readyState === 4) {
+            if (xhr.status === 200) {
+              try {
+                const data = JSON.parse(xhr.responseText);
+                if (!data.dateTime || !data.timeZone) throw new Error("Respuesta inválida");
+  
+                const utcTime = luxon.DateTime.fromISO(data.dateTime, { zone: data.timeZone }).toUTC();
+                const targetTime = utcTime.setZone(zonaAUsar);
+                const adjustedDate = new Date(targetTime.toISO());
+  
+                LogManager.writeLog(`Hora actual del dispositivo: ${new Date().toString()}`);
+                LogManager.writeLog(`Nueva hora ajustada: ${adjustedDate.toString()} (Zona: ${zonaAUsar})`);
+  
+                try {
+                  tizen.time.setCurrentDateTime(adjustedDate);
+                  onStatus(`Hora ajustada correctamente a ${zonaAUsar}`);
+                  LogManager.writeLog("Hora ajustada con éxito");
+                } catch (e) {
+                  LogManager.writeLog("Error ajustando hora (probable emulador): " + e.message);
+                  onStatus(`Simulación: no se puede ajustar hora (Zona: ${zonaAUsar})`);
+                }
+              } catch (e) {
+                LogManager.writeLog("Error procesando respuesta de timeapi.io: " + e.message);
+                onStatus("Error al procesar la hora");
+              }
+            } else {
+              LogManager.writeLog("Fallo en timeapi.io: " + xhr.status);
+              onStatus("No se pudo sincronizar la hora");
+            }
+          }
+        };
+        xhr.send();
+      });
+    }
+  };
