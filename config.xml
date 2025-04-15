@@ -4,28 +4,21 @@
         id="com.tizenTimeFix.sssptimefixer"
         version="1.0.0"
         viewmodes="fullscreen">
-
   <tizen:profile name="tv"/>
   <tizen:application id="com.tizenTimeFix.timefixer" package="com.tizenTimeFix.timefixer" required_version="2.4"/>
   <content src="index.html"/>
   <name>SSSP Time Fixer</name>
   <description>Corrige la hora automáticamente en pantallas Tizen</description>
   <icon src="icon.png"/>
-
   <tizen:setting screen-orientation="landscape"
                  context-menu="disable"
                  background-support="disable"
                  encryption="disable"
                  install-location="internal-only"
                  hwkey-event="enable"/>
-
-<tizen:privilege name="http://tizen.org/privilege/time.set"/>
-<tizen:privilege name="http://tizen.org/privilege/internet"/>
-<tizen:privilege name="http://tizen.org/privilege/filesystem.read"/>
-<tizen:privilege name="http://tizen.org/privilege/filesystem.write"/>
-
-
-
+  <tizen:privilege name="http://tizen.org/privilege/time.set"/>
+  <tizen:privilege name="http://tizen.org/privilege/internet"/>
+  <tizen:privilege name="http://tizen.org/privilege/filesystem.read"/>
+  <tizen:privilege name="http://tizen.org/privilege/filesystem.write"/>
   <tizen:feature name="http://tizen.org/feature/screen.size.all"/>
-
 </widget>
