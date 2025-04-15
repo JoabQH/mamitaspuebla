@@ -1,36 +1,24 @@
-document.addEventListener("DOMContentLoaded", function () {
-  const message = document.getElementById("message");
-
-  function ajustarHoraConConfig(config) {
-    window.TimeSync.init(config, function (statusMsg) {
-      message.innerHTML = statusMsg;
-    
-      config.lastUpdate = new Date().toISOString();
-      LocalStorageManager.saveConfig(config);
-    });
-  }
-
-  ConfigManager.loadConfig()
-    .then((config) => {
-      ajustarHoraConConfig(config);
-    })
-    .catch((err) => {
-      console.warn("Fallo al cargar config.json:", err);
-      message.innerHTML = "Cargando configuración local...";
-
-      LocalStorageManager.loadConfig((error, savedConfig) => {
-        if (error) {
-          message.innerHTML = "Sin conexión y sin configuración local";
-          console.error(error);
-        } else {
-          ajustarHoraConConfig(savedConfig);
-        }
+const ConfigManager = {
+    loadConfig: function () {
+      return new Promise(function (resolve, reject) {
+        const xhr = new XMLHttpRequest();
+        xhr.overrideMimeType("application/json");
+        xhr.open("GET", "config.json", true);
+        xhr.onreadystatechange = function () {
+          if (xhr.readyState === 4) {
+            if (xhr.status === 200 || xhr.status === 0) {
+              try {
+                const config = JSON.parse(xhr.responseText);
+                resolve(config);
+              } catch (e) {
+                reject("JSON mal formado");
+              }
+            } else {
+              reject("No se pudo cargar config.json");
+            }
+          }
+        };
+        xhr.send();
       });
-      
-    });
-    setTimeout(function () {
-      console.log("Cerrando la aplicación...");
-      tizen.application.getCurrentApplication().exit();
-    }, 10000); 
-
-});
+    },
+  };
